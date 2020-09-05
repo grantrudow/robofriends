@@ -1,46 +1,52 @@
 import React from 'react';
+import { connect } from 'react-redux';
 import CardList from '../components/CardList';
 import SearchBox from '../components/SearchBox';
 import Scroll from '../components/Scroll';
 import ErrorBoundary from '../components/ErrorBoundary'
 import './App.css';
 
-// IF APP OWNS STATE IT HAS TO BE CLASS
-// IF COMPONENT HAS STATE IT IS A SMART COMPONENT
-class App extends React.Component {
-    constructor() {
-        super();
-        //State is something can change and effect the app
-        //Usually lives in the parent component
-        this.state = {
-            robots: [],
-            searchfield: ''
-        };
+import { setSearchField, requestRobots } from '../actions';
+
+const mapStateToProps = state => {
+    return {
+        //From reducer
+        searchField: state.searchRobots.searchField,
+        robots: state.requestRobots.robots,
+        isPending: state.requestRobots.isPending,
+        error: state.requestRobots.error
     }
+}
+
+const mapDispatchToProps = (dispatch) => {
+    //Used to send action to reducer
+    return {
+        onSearchChange: (event) => dispatch(setSearchField(event.target.value)),
+        //Replace componentDidMount
+        onRequestRobots: () => dispatch(requestRobots())
+    }
+}
+
+
+// IF APP OWNS STATE IT HAS TO BE CLASS
+// IF COMPONENT HAS STATE IT IS A SMART COMPONENT (CALLED A CONTAINER)
+class App extends React.Component {
 
     componentDidMount() {
-        fetch('https://jsonplaceholder.typicode.com/users')
-            .then(response => response.json())
-            .then(users => this.setState({ robots: users })); 
-    }
-
-    //Any time you make your own method on components you have to use this syntax
-    onSearchChange = (event) => {
-        // In order to update state (searchfield gets updated according to searchbox)
-        this.setState({searchfield: event.target.value})
+        this.props.onRequestRobots();
     }
 
     render() {
-        const { robots, searchfield } = this.state;
+        const { searchField, onSearchChange, robots, isPending } = this.props;
         const filteredRobots = robots.filter(robot => {
-            return robot.name.toLowerCase().includes(searchfield.toLowerCase());
+            return robot.name.toLowerCase().includes(searchField.toLowerCase());
         })
-            return !robots.length ?
+            return isPending ?
                 <h1 className="tc">Loading</h1> :
                 (
                     <div className="tc">
                         <h1 className="f1">RoboFriends</h1>
-                        <SearchBox searchChange={this.onSearchChange}/>
+                        <SearchBox searchChange={onSearchChange}/>
                         <Scroll>
                             <ErrorBoundary>
                                 <CardList robots={filteredRobots}/>
@@ -51,4 +57,7 @@ class App extends React.Component {
     }
 }
 
-export default App;
+//Connect will run and return a func that will run through App
+export default connect(mapStateToProps, mapDispatchToProps)(App);
+
+//App is now subscribed to any state changes in redux Store

@@ -2,21 +2,29 @@
 import React from 'react';
 // ReactDOM means website...could be React Native (mobile apps)
 import ReactDOM from 'react-dom';
+import {Provider} from 'react-redux';
+import {createStore, applyMiddleware, combineReducers} from 'redux';
+import thunkMiddleware from 'redux-thunk';
 // ./ means it's in the same folder
 import './index.css';
-//Must be capitalized for syntax
-import Card from './components/Card';
 import App from './containers/App'
 // Service workers are new feature that allow apps to run faster and work offline
 import * as serviceWorker from './serviceWorker';
 import 'tachyons';
-// Have to destructure because you're not exporting default
-import { robots } from './robots';
+import {searchRobots, requestRobots} from './reducers';
+import { createLogger } from 'redux-logger';
+
+//SMART COMPONENTS ARE CALLED CONTAINERS
+//logger is middleware that logs all actions in console (good for development)
+const logger = createLogger();
+const rootReducer = combineReducers({ searchRobots, requestRobots })
+const store = createStore(rootReducer, applyMiddleware(thunkMiddleware, logger));
 
 ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
+  //Provider will pass down store to all the components
+    <Provider store={store} >
+      <App />
+    </Provider>,
   document.getElementById('root')
 );
 
